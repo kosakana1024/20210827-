@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>chatapp</title>
+    <link rel="stylesheet" href="CSS/style.css">
+    <link rel="stylesheet" href="CSS/reset.css">
+    <style>
+        #output li {
+            background: #ccc;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="images/IMG_2115.JPG" alt="" class="head">
+    <h1>ちゃっとあぷり</h1>
+    <form>
+        <fieldset>
+            <div class="chat">
+                <!-- user1 -->
+                <div>
+                    <div>ぽなまえ:<input placeholder="とりんご" type="text" id="name"></div>
+
+                    <div>ほんぶん:<input type="text" id="text"></div>
+
+                    <div><button type="button" id="send">おくるんご</button></div>
+                </div>
+                <!-- user1 -->
+
+                
+                <!-- user2 -->
+                <div>
+                    <div>ぽなまえ:<input placeholder="ゆちんご" type="text" id="name1"></div>
+
+                    <div>ほんぶん:<input type="text" id="text1"></div>
+
+                    <div><button type="button" id="send1">おくるんご</button></div>
+                </div>
+                <!-- user2 -->
+            </div>
+
+            <div class="chat2">
+                <!-- user1 -->
+                <div><button type="button" id="clear">けすんご</button></div>
+                <!-- user1 -->
+
+                <!-- user2 -->
+                <div><button type="button" id="clear">けすんご</button></div>
+                <!-- user2 -->
+            </div>
+        </fieldset>
+    </form>
+
+    <!-- データ出力場所 -->
+    <!-- <ul id="output"></ul> -->
+
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <!-- 以下にfirebaseのコードを貼り付けよう -->
+    <script src="https://www.gstatic.com/firebasejs/8.6.7/firebase.js"></script>
+
+    <script>
+        var firebaseConfig = {
+            apiKey: "AIzaSyD6J3ynDPxwwr9N1xVFodAUIlQH2ZdkZaM",
+            authDomain: "chat-b2f26.firebaseapp.com",
+            projectId: "chat-b2f26",
+            storageBucket: "chat-b2f26.appspot.com",
+            messagingSenderId: "589251278567",
+            appId: "1:589251278567:web:02c4fa8cabdecb0bc61442"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+    <script>
+    // 日時をいい感じの形式にする関数
+        function convertFromFirestoreTimestampToDatetime(timestamp) {
+        const _d = timestamp ? new Date(timestamp * 1000) : new Date();
+        const Y = _d.getFullYear();
+        const m = (_d.getMonth() + 1).toString().padStart(2, '0');
+        const d = _d.getDate().toString().padStart(2, '0');
+        const H = _d.getHours().toString().padStart(2, '0');
+        const i = _d.getMinutes().toString().padStart(2, '0');
+        const s = _d.getSeconds().toString().padStart(2, '0');
+        return `${Y}/${m}/${d} ${H}:${i}:${s}`;
+    }
+
+    // リアルタイム通信の準備
+    const db = firebase.firestore().collection('chat');
+    // const db = firebase.firestore().collection('chat2');
+
+    // user1
+    // 送信ボタンクリック時にデータを送信
+    $('#send').on('click' , function () {
+        const data = {
+            name: $('#name').val(),
+            text: $('#text').val(),
+            time: firebase.firestore.FieldValue.serverTimestamp(),
+        };
+        db.add(data);
+        $('#text').val('');
+    });
+
+    // エンターキーで送信
+    $('#text').on('keydown' , function (e) {
+        if (e.keyCode === 13) {
+            const data = {
+                name: $('#name').val(),
+                text: $('#text').val(),
+                time: firebase.firestore.FieldValue.serverTimestamp(),
+            };
+            db.add(data);
+            $('#text').val('');
+        }
+    });
+
+    // データ出力
+    db.orderBy('time', 'desc').onSnapshot(function (querySnapshot) {
+        console.log(querySnapshot.docs);
+    // コピペ,これからもコピペ
+    const dataArray = [];
+    querySnapshot.docs.forEach(function (doc) {
+        const data = {
+            id: doc.id,
+            data: doc.data(),
+        };
+        dataArray.push(data);
+    });
+
+    console.log(dataArray);
+
+    const tagArray = [];
+    dataArray.forEach(function (data) {
+        tagArray.push(`
+        <div id="${data.id}">
+            <p>${data.data.name} at ${data.data.time}</p>
+            <p>${data.data.text}</p>
+        </div>
+        `);
+    });
+
+    $('#output').html(tagArray);
+    });
+
+
+    // user2
+    // 送信ボタンクリック時にデータを送信
+    // $('#send1').on('click' , function () {
+    //     const data = {
+    //         name: $('#name1').val(),
+    //         text: $('#text1').val(),
+    //         time: firebase.firestore.FieldValue.serverTimestamp(),
+    //     };
+    //     db.add(data);
+    //     $('#text1').val('');
+    // });
+
+    // // エンターキーで送信
+    // $('#text1').on('keydown' , function (e) {
+    //     if (e.keyCode === 13) {
+    //         const data = {
+    //             name: $('#name1').val(),
+    //             text: $('#text1').val(),
+    //             time: firebase.firestore.FieldValue.serverTimestamp(),
+    //         };
+    //         db.add(data);
+    //         $('#text1').val('');
+    //     }
+    // });
+
+    // // データ出力
+    // db.orderBy('time', 'desc').onSnapshot(function (querySnapshot) {
+    //     console.log(querySnapshot.docs);
+    // });
+
+    // // コピペ,これからもコピペ
+    // const dataArray = [];
+    // querySnapshot.docs.forEach(function (doc) {
+    //     const data = {
+    //         id: doc.id,
+    //         data: doc.data(),
+    //     };
+    //     dataArray.push(data);
+    // });
+
+    // console.log(dataArray);
+
+    // const tagArray = [];
+    // dataArray.forEach(function (data) {
+    //     tagArray.push(`
+    //     <div id="${data.id}">
+    //         <p>${data.data.name} at ${convertTimestampToDatetime(data.data.time.seconds)}</p>
+    //         <p>${data.data.text}</p>
+    //     </div>
+    //     `);
+    // });
+
+    // $('#output').html(tagArray);
+    </script>
+</body>
+</html>
